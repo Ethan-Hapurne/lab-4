@@ -241,18 +241,24 @@ public class MongoGradeDataBase implements GradeDataBase {
         }
     }
 
-    @SuppressWarnings("checkstyle:RightCurly")
     @Override
+    //       Hint: Read the Grade API documentation for getMyTeam (link below) and refer to the above similar
+    //             methods to help you write this code (copy-and-paste + edit as needed).
+    //             https://www.postman.com/cloudy-astronaut-813156/csc207-grade-apis-demo/folder/isr2ymn/get-my-team
     public Team getMyTeam() {
         final OkHttpClient client = new OkHttpClient().newBuilder()
                 .build();
         final Request request = new Request.Builder()
                 .url(String.format("%s/team", API_URL))
                 .method("GET", null)
+                // note to self: the main difference between teh getmyteam method and the formteam method
+                // is the .method in the request.builder — get vs post, one for backend team creation, the other
+                // just for retrieving information
                 .addHeader(TOKEN, getAPIToken())
                 .addHeader(CONTENT_TYPE, APPLICATION_JSON)
                 .build();
 
+        // HINT: Look at the formTeam method to get an idea on how to parse the response
         try {
             final Response response = client.newCall(request).execute();
             final JSONObject responseBody = new JSONObject(response.body().string());
@@ -260,18 +266,22 @@ public class MongoGradeDataBase implements GradeDataBase {
             if (responseBody.getInt(STATUS_CODE) == SUCCESS_CODE) {
                 final JSONObject team = responseBody.getJSONObject("team");
                 final JSONArray membersArray = team.getJSONArray("members");
+
                 final String[] members = new String[membersArray.length()];
                 for (int i = 0; i < membersArray.length(); i++) {
                     members[i] = membersArray.getString(i);
                 }
+
                 return Team.builder()
                         .name(team.getString(NAME))
                         .members(members)
                         .build();
-            } else {
+            }
+            else {
                 throw new RuntimeException(responseBody.getString(MESSAGE));
             }
-        } catch (IOException | JSONException event) {
+        }
+        catch (IOException | JSONException event) {
             throw new RuntimeException(event);
         }
     }
